@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ระบบจอดรถ</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.19.0/dist/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f0f4f8;color:#1a1a18;font-size:14px;min-height:100vh;overflow:hidden;height:100vh}
+.app{display:grid;grid-template-columns:240px 1fr;height:100vh;max-height:100vh;overflow:hidden;background:#fff;max-width:1100px;margin:0 auto;box-shadow:0 2px 24px rgba(0,0,0,0.1)}
+@media(min-width:768px){body{padding:20px;overflow:auto;height:auto}.app{height:calc(100vh - 40px);max-height:calc(100vh - 40px);border:1px solid rgba(0,0,0,0.1);border-radius:14px;overflow:hidden}}
+
+/* SIDEBAR */
+.sidebar{background:#1e293b;display:flex;flex-direction:column;transition:transform .25s;z-index:100;min-height:0;height:100%;overflow:hidden}
+.sidebar-header{padding:18px 16px 14px;border-bottom:1px solid rgba(255,255,255,0.08)}
+.app-title{font-size:16px;font-weight:600;color:#fff;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+.app-title i{color:#60a5fa}
+.add-btn{width:100%;padding:10px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+.add-btn:active{background:#2563eb}
+.file-btns{display:flex;gap:6px;margin-top:8px}
+.file-btn{flex:1;padding:7px 6px;border:1px solid rgba(255,255,255,0.15);border-radius:8px;background:transparent;font-size:11px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:4px;color:#94a3b8}
+.file-btn:active{background:rgba(255,255,255,0.1)}
+.file-btn.save-btn{border-color:#34d399;color:#34d399}
+.file-status{font-size:10px;color:#475569;margin-top:6px;text-align:center}
+.file-status.linked{color:#34d399}
+.filter-tabs{display:flex;gap:4px;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.filter-tab{flex:1;padding:5px 4px;border:1px solid rgba(255,255,255,0.1);border-radius:6px;background:transparent;font-size:10px;cursor:pointer;text-align:center;color:#64748b;font-family:inherit}
+.filter-tab.active{background:#3b82f6;color:#fff;border-color:#3b82f6}
+.car-list{flex:1;overflow-y:auto;padding:8px;-webkit-overflow-scrolling:touch}
+.car-item{padding:10px 12px;border-radius:8px;cursor:pointer;margin-bottom:4px;border:1px solid transparent}
+.car-item:active,.car-item.active{background:rgba(59,130,246,0.15);border-color:#3b82f6}
+.car-plate{font-size:13px;font-weight:600;color:#e2e8f0;margin-bottom:2px}
+.car-name{font-size:11px;color:#94a3b8;margin-bottom:4px}
+.car-meta{display:flex;align-items:center;gap:6px}
+.status-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.dot-paid{background:#22c55e}.dot-unpaid{background:#eab308}.dot-overdue{background:#ef4444}
+.car-meta-text{font-size:10px;color:#64748b}
+
+/* MAIN */
+.main{display:flex;flex-direction:column;overflow:hidden;min-width:0;min-height:0;height:100%;background:#f8fafc}
+.main-header{padding:12px 16px;border-bottom:1px solid rgba(0,0,0,0.08);display:flex;align-items:center;gap:10px;background:#fff;flex-shrink:0}
+.hamburger{display:none;background:transparent;border:none;cursor:pointer;font-size:22px;color:#444;padding:2px;flex-shrink:0}
+.view-tabs{display:flex;gap:4px;flex:1;overflow-x:auto;scrollbar-width:none}
+.view-tabs::-webkit-scrollbar{display:none}
+.view-tab{padding:6px 12px;border:1px solid rgba(0,0,0,0.12);border-radius:8px;background:transparent;font-size:12px;cursor:pointer;color:#666;font-family:inherit;display:flex;align-items:center;gap:5px;white-space:nowrap;flex-shrink:0}
+.view-tab.active{background:#1e293b;color:#fff;border-color:#1e293b}
+.content{flex:1;overflow-y:auto;padding:16px;-webkit-overflow-scrolling:touch;min-height:0}
+
+/* CARDS */
+.card{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:16px;margin-bottom:14px;box-shadow:0 1px 4px rgba(0,0,0,0.04)}
+.card-title{font-size:13px;font-weight:600;color:#475569;display:flex;align-items:center;gap:6px;margin-bottom:12px}
+
+/* CUSTOMER INFO */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.info-field label{font-size:11px;color:#94a3b8;display:block;margin-bottom:3px}
+.info-input{width:100%;font-size:14px;border:1px solid rgba(0,0,0,0.1);border-radius:8px;padding:8px 10px;font-family:inherit;background:#f8fafc;outline:none;color:#1e293b}
+.info-input:focus{border-color:#3b82f6;background:#fff}
+.price-display{font-size:22px;font-weight:700;color:#1e293b}
+.price-unit{font-size:12px;color:#94a3b8;margin-left:4px}
+
+/* MONTH LIST */
+.month-row{display:flex;align-items:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid rgba(0,0,0,0.07);background:#f8fafc;margin-bottom:6px;transition:all .15s}
+.month-row.paid{background:#f0fdf4;border-color:#bbf7d0}
+.month-row.overdue{background:#fff5f5;border-color:#fecaca}
+.month-row.unpaid{background:#fefce8;border-color:#fde68a}
+.month-cb-wrap{flex-shrink:0}
+.month-cb{width:20px;height:20px;cursor:pointer;accent-color:#22c55e;flex-shrink:0}
+.month-info{flex:1;min-width:0}
+.month-label{font-size:13px;font-weight:500;color:#1e293b}
+.month-deadline{font-size:11px;color:#94a3b8;margin-top:1px}
+.month-status{font-size:11px;font-weight:600;padding:3px 8px;border-radius:20px;flex-shrink:0}
+.status-paid{background:#dcfce7;color:#16a34a}
+.status-unpaid{background:#fef9c3;color:#854d0e}
+.status-overdue{background:#fee2e2;color:#dc2626}
+.month-price{font-size:13px;font-weight:600;color:#1e293b;flex-shrink:0;min-width:50px;text-align:right}
+.month-del{background:transparent;border:none;cursor:pointer;color:#cbd5e1;padding:4px;border-radius:6px;flex-shrink:0;display:flex;align-items:center}
+.month-del:active{color:#ef4444}
+.add-month-btn{width:100%;padding:10px;border:2px dashed #cbd5e1;border-radius:10px;background:transparent;color:#94a3b8;font-size:13px;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px;margin-top:4px}
+.add-month-btn:active{border-color:#3b82f6;color:#3b82f6}
+
+/* STATS */
+.stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.stat-card{background:#fff;border-radius:10px;padding:12px;text-align:center;border:1px solid rgba(0,0,0,0.07);box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.stat-num{font-size:24px;font-weight:700}
+.stat-lbl{font-size:11px;color:#94a3b8;margin-top:2px}
+.stat-sub{font-size:12px;font-weight:600;margin-top:2px}
+
+/* OVERVIEW CAR CARD */
+.ov-card{background:#fff;border:1px solid rgba(0,0,0,0.08);border-radius:12px;padding:14px;margin-bottom:10px;cursor:pointer;box-shadow:0 1px 3px rgba(0,0,0,0.04)}
+.ov-card:active{background:#f8fafc}
+.ov-top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ov-plate{font-size:16px;font-weight:700;color:#1e293b;background:#f1f5f9;padding:4px 10px;border-radius:6px;letter-spacing:1px}
+.ov-name{font-size:13px;color:#64748b;flex:1}
+.ov-badge{font-size:11px;font-weight:600;padding:3px 10px;border-radius:20px;flex-shrink:0}
+.ov-months{font-size:12px;color:#94a3b8}
+.ov-price{font-size:13px;font-weight:600;color:#1e293b}
+
+/* CALENDAR */
+.cal-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.cal-nav-btn{background:transparent;border:1px solid rgba(0,0,0,0.1);border-radius:8px;cursor:pointer;color:#444;padding:4px 12px;font-size:20px;line-height:1}
+.cal-title{font-size:16px;font-weight:600}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal-hd{font-size:11px;color:#94a3b8;text-align:center;padding:4px 0}
+.cal-day{min-height:60px;border:1px solid rgba(0,0,0,0.07);border-radius:8px;padding:4px;background:#fff;font-size:11px}
+.cal-day.today{background:#eff6ff;border-color:#93c5fd}
+.cal-day-num{font-weight:500;color:#475569;margin-bottom:2px}
+.cal-day.today .cal-day-num{color:#2563eb;font-weight:700}
+.cal-event{font-size:9px;border-radius:3px;padding:1px 4px;margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer}
+.ev-paid{background:#dcfce7;color:#15803d}
+.ev-unpaid{background:#fef9c3;color:#854d0e}
+.ev-overdue{background:#fee2e2;color:#dc2626}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:200;align-items:center;justify-content:center;padding:16px}
+.modal-bg.show{display:flex}
+.modal{background:#fff;border-radius:16px;padding:20px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+.modal-field{margin-bottom:12px}
+.modal-field label{font-size:12px;color:#64748b;display:block;margin-bottom:4px;font-weight:500}
+.modal-input{width:100%;font-size:15px;border:1px solid rgba(0,0,0,0.12);border-radius:10px;padding:10px 12px;font-family:inherit;outline:none;color:#1e293b;background:#f8fafc}
+.modal-input:focus{border-color:#3b82f6;background:#fff}
+.modal-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-btns{display:flex;gap:8px;margin-top:16px}
+.modal-ok{flex:1;padding:12px;background:#3b82f6;color:#fff;border:none;border-radius:10px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.modal-ok:active{background:#2563eb}
+.modal-cancel{padding:12px 16px;background:#f1f5f9;color:#475569;border:none;border-radius:10px;font-size:14px;cursor:pointer;font-family:inherit}
+
+/* TOAST */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);padding:10px 20px;border-radius:10px;font-size:13px;font-weight:500;opacity:0;transition:opacity .3s;pointer-events:none;z-index:999;white-space:nowrap}
+.toast.success{background:#dcfce7;color:#15803d;border:1px solid #86efac}
+.toast.info{background:#dbeafe;color:#1d4ed8;border:1px solid #93c5fd}
+.toast.error{background:#fee2e2;color:#dc2626;border:1px solid #fca5a5}
+
+/* OVERLAY */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:50}
+.overlay.show{display:block}
+
+/* EMPTY */
+.empty{text-align:center;padding:60px 20px;color:#94a3b8}
+.empty i{font-size:48px;display:block;margin-bottom:12px;color:#cbd5e1}
+
+/* MOBILE */
+@media(max-width:767px){
+  body{padding:0}
+  .app{grid-template-columns:1fr;max-width:100%;box-shadow:none;border-radius:0;height:100vh}
+  .sidebar{position:fixed;top:0;left:0;width:260px;height:100vh;transform:translateX(-100%);box-shadow:4px 0 20px rgba(0,0,0,0.3)}
+  .sidebar.open{transform:translateX(0)}
+  .hamburger{display:flex}
+  .overlay{display:none}
+  .overlay.show{display:block}
+  .stats-grid{grid-template-columns:repeat(3,1fr)}
+  .info-grid{grid-template-columns:1fr}
+  .cal-day{min-height:44px}
+}
+</style>
+</head>
+<body>
+<div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+<!-- ADD CUSTOMER MODAL -->
+<div class="modal-bg" id="modal-add">
+  <div class="modal">
+    <div class="modal-title"><i class="ti ti-car" style="color:#3b82f6"></i>เพิ่มลูกค้าใหม่</div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>ป้ายทะเบียน *</label>
+        <input class="modal-input" id="m-plate" placeholder="กข 1234" style="text-transform:uppercase">
+      </div>
+      <div class="modal-field">
+        <label>ชื่อ *</label>
+        <input class="modal-input" id="m-name" placeholder="ชื่อลูกค้า">
+      </div>
+    </div>
+    <div class="modal-field">
+      <label>เบอร์ติดต่อ</label>
+      <input class="modal-input" id="m-phone" placeholder="089-000-1234" type="tel">
+    </div>
+    <div class="modal-field">
+      <label>รายละเอียดเพิ่มเติม</label>
+      <input class="modal-input" id="m-note" placeholder="เช่น รถตู้สีขาว">
+    </div>
+    <div class="modal-row">
+      <div class="modal-field">
+        <label>วันที่เข้าจอด *</label>
+        <input class="modal-input" id="m-startdate" type="date">
+      </div>
+      <div class="modal-field">
+        <label>ราคา/เดือน (บาท) *</label>
+        <input class="modal-input" id="m-price" type="number" placeholder="600" min="0">
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-cancel" onclick="closeModal('modal-add')">ยกเลิก</button>
+      <button class="modal-ok" onclick="confirmAddCustomer()"><i class="ti ti-check"></i> เพิ่มลูกค้า</button>
+    </div>
+  </div>
+</div>
+
+<div class="app">
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <div class="app-title"><i class="ti ti-parking"></i>ที่จอดรถ</div>
+      <button class="add-btn" onclick="openAddModal()"><i class="ti ti-plus"></i> เพิ่มลูกค้าใหม่</button>
+      <div class="file-btns">
+        <button class="file-btn save-btn" onclick="saveFile()"><i class="ti ti-device-floppy"></i> บันทึก</button>
+        <button class="file-btn" onclick="document.getElementById('load-input').click()"><i class="ti ti-folder-open"></i> เปิด</button>
+        <input type="file" id="load-input" accept=".json" style="display:none" onchange="loadFromFile(this)">
+      </div>
+      <div class="file-status" id="file-status">ยังไม่ได้เชื่อมไฟล์</div>
+    </div>
+    <div class="filter-tabs">
+      <button class="filter-tab active" onclick="setFilter('all',this)">ใช้งาน</button>
+      <button class="filter-tab" onclick="setFilter('overdue',this)">ค้างชำระ</button>
+      <button class="filter-tab" onclick="setFilter('inactive',this)">ออกแล้ว</button>
+    </div>
+    <div class="car-list" id="car-list"></div>
+  </div>
+
+  <div class="main">
+    <div class="main-header">
+      <button class="hamburger" onclick="openSidebar()"><i class="ti ti-menu-2"></i></button>
+      <div class="view-tabs">
+        <button class="view-tab active" onclick="setView('overview',this)"><i class="ti ti-chart-bar"></i> ภาพรวม</button>
+        <button class="view-tab" onclick="setView('detail',this)"><i class="ti ti-id-badge"></i> ข้อมูล</button>
+        <button class="view-tab" onclick="setView('calendar',this)"><i class="ti ti-calendar"></i> ปฏิทิน</button>
+      </div>
+    </div>
+    <div class="content" id="main-content"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const THAI_MONTHS=['ม.ค.','ก.พ.','มี.ค.','เม.ย.','พ.ค.','มิ.ย.','ก.ค.','ส.ค.','ก.ย.','ต.ค.','พ.ย.','ธ.ค.'];
+const THAI_MONTHS_FULL=['มกราคม','กุมภาพันธ์','มีนาคม','เมษายน','พฤษภาคม','มิถุนายน','กรกฎาคม','สิงหาคม','กันยายน','ตุลาคม','พฤศจิกายน','ธันวาคม'];
+
+let customers=[];
+let selectedId=null,currentFilter='all',currentView='overview';
+let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
+let nextId=1,nextMonthId=1;
+let fileHandle=null;
+
+/* ---- utils ---- */
+function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+function isMobile(){return window.innerWidth<768}
+function showToast(msg,type='success'){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast '+type;t.style.opacity='1';
+  clearTimeout(t._t);t._t=setTimeout(()=>t.style.opacity='0',2800);
+}
+function recalcIds(){
+  if(customers.length){
+    nextId=Math.max(...customers.map(c=>c.id))+1;
+    const allMids=customers.flatMap(c=>c.months.map(m=>m.id));
+    nextMonthId=allMids.length?Math.max(...allMids)+1:1;
+  }else{nextId=1;nextMonthId=1;}
+}
+
+/* ---- deadline & status ---- */
+function monthDeadline(startDate, monthIndex){
+  // parse แบบ local เพื่อกัน timezone shift
+  const parts=startDate.split('-');
+  const year=parseInt(parts[0]),month=parseInt(parts[1])-1,day=parseInt(parts[2]);
+  // คำนวณเดือนเป้าหมาย
+  const targetMonth=month+monthIndex;
+  const targetYear=year+Math.floor(targetMonth/12);
+  const targetMon=((targetMonth%12)+12)%12;
+  // clamp วันที่ให้ไม่เกินจำนวนวันในเดือนนั้น เช่น 31 ก.พ. → 28/29
+  const maxDay=new Date(targetYear, targetMon+1, 0).getDate();
+  return new Date(targetYear, targetMon, Math.min(day, maxDay));
+}
+function getMonthStatus(m){
+  if(m.paid)return'paid';
+  const dl=new Date(m.deadline);
+  return new Date()>dl?'overdue':'unpaid';
+}
+function formatDate(dateStr){
+  const d=new Date(dateStr);
+  return d.getDate()+'/'+(d.getMonth()+1)+'/'+(d.getFullYear()+543);
+}
+function formatDeadline(deadline){
+  const d=new Date(deadline);
+  return d.getDate()+' '+THAI_MONTHS[d.getMonth()]+' '+(d.getFullYear()+543);
+}
+function countdownText(deadline){
+  const diff=new Date(deadline)-new Date();
+  if(diff<0){
+    const d=Math.floor(-diff/86400000);
+    return'เกินกำหนด '+(d>0?d+' วัน':'วันนี้');
+  }
+  const d=Math.floor(diff/86400000),h=Math.floor((diff%86400000)/3600000);
+  if(d>0)return'เหลือ '+d+' วัน';
+  return'เหลือ '+h+' ชม.';
+}
+function getLatestUnpaidMonth(c){
+  return c.months.filter(m=>!m.paid).sort((a,b)=>new Date(a.deadline)-new Date(b.deadline))[0]||null;
+}
+function getCustomerMainStatus(c){
+  const unpaid=c.months.filter(m=>!m.paid);
+  if(!unpaid.length)return'paid';
+  if(unpaid.some(m=>new Date()>new Date(m.deadline)))return'overdue';
+  return'unpaid';
+}
+
+/* ---- sidebar ---- */
+function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show')}
+function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show')}
+
+/* ---- file ---- */
+function updateFileStatus(){
+  const el=document.getElementById('file-status');
+  if(fileHandle){el.className='file-status linked';el.innerHTML='<i class="ti ti-link"></i> '+fileHandle.name;}
+  else{el.className='file-status';el.textContent='ยังไม่ได้เชื่อมไฟล์';}
+}
+function downloadJson(data){
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);a.download='parking_data.json';a.click();
+  URL.revokeObjectURL(a.href);
+  showToast('💾 ดาวน์โหลด parking_data.json แล้ว','success');
+}
+async function saveFile(){
+  const data=JSON.stringify({customers,meta:{savedAt:new Date().toISOString(),version:1}},null,2);
+  const isDesktop=window.showSaveFilePicker&&!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
+  if(isDesktop){
+    try{
+      if(!fileHandle){
+        fileHandle=await window.showSaveFilePicker({suggestedName:'parking_data.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});
+      }
+      const w=await fileHandle.createWritable();await w.write(data);await w.close();
+      updateFileStatus();showToast('💾 บันทึกแล้ว','success');
+    }catch(err){
+      if(err.name==='AbortError')return;
+      fileHandle=null;updateFileStatus();downloadJson(data);
+    }
+    return;
+  }
+  downloadJson(data);
+}
+function loadFromFile(input){
+  const file=input.files[0];if(!file)return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const data=JSON.parse(e.target.result);
+      if(data.customers&&Array.isArray(data.customers)){
+        customers=data.customers;fileHandle=null;
+        selectedId=customers.length?customers[0].id:null;
+        recalcIds();updateFileStatus();render();
+        showToast('📂 โหลดสำเร็จ — '+customers.length+' คัน','info');
+      }else showToast('ไฟล์ไม่ถูกต้อง','error');
+    }catch{showToast('อ่านไฟล์ไม่ได้','error');}
+    input.value='';
+  };
+  reader.readAsText(file,'UTF-8');
+}
+
+/* ---- modal ---- */
+function openAddModal(){
+  document.getElementById('m-plate').value='';
+  document.getElementById('m-name').value='';
+  document.getElementById('m-phone').value='';
+  document.getElementById('m-price').value='600';
+  document.getElementById('m-note').value='';
+  document.getElementById('m-startdate').value=new Date().toISOString().slice(0,10);
+  document.getElementById('modal-add').classList.add('show');
+  setTimeout(()=>document.getElementById('m-plate').focus(),100);
+}
+function closeModal(id){document.getElementById(id).classList.remove('show')}
+function confirmAddCustomer(){
+  const plate=document.getElementById('m-plate').value.trim().toUpperCase();
+  const name=document.getElementById('m-name').value.trim();
+  const phone=document.getElementById('m-phone').value.trim();
+  const startDate=document.getElementById('m-startdate').value;
+  const price=parseFloat(document.getElementById('m-price').value)||0;
+  const note=document.getElementById('m-note').value.trim();
+  if(!plate||!name||!startDate||!price){showToast('กรุณากรอกข้อมูลให้ครบ','error');return;}
+  // สร้างเดือนแรกอัตโนมัติ
+  const dl=monthDeadline(startDate,0);
+  const firstMonth={id:nextMonthId++,label:formatMonthLabel(startDate,0),deadline:dl.toISOString(),paid:false,price:price};
+  const c={id:nextId++,plate,name,phone,startDate,price,note,months:[firstMonth]};
+  customers.push(c);selectedId=c.id;
+  closeModal('modal-add');
+  setView('detail',document.querySelector(".view-tab[onclick*='detail']"));
+  render();
+  showToast('เพิ่ม '+plate+' แล้ว','success');
+}
+function formatMonthLabel(startDate,idx){
+  const d=new Date(startDate);
+  const target=new Date(d.getFullYear(),d.getMonth()+idx,1);
+  return THAI_MONTHS[target.getMonth()]+' '+(target.getFullYear()+543);
+}
+
+/* ---- customer actions ---- */
+function selectCustomer(id){
+  selectedId=+id;
+  if(isMobile())closeSidebar();
+  setView('detail',document.querySelector(".view-tab[onclick*='detail']"));
+  render();
+}
+function toggleInactive(id){
+  id=+id;
+  const c=customers.find(x=>x.id===id);
+  if(!c)return;
+  c.inactive=!c.inactive;
+  render();
+  showToast(c.inactive?'🚗 ย้ายไปรายการออกแล้ว':'✅ ย้ายกลับรายการใช้งาน','info');
+}
+function deleteCustomer(id){
+  id=+id;if(!confirm('ลบลูกค้าคนนี้?'))return;
+  customers=customers.filter(c=>c.id!==id);
+  selectedId=customers.length?customers[0].id:null;
+  render();
+}
+function updateCustomer(id,key,val){
+  id=+id;const c=customers.find(x=>x.id===id);
+  if(c){c[key]=val;renderSidebar();}
+}
+
+/* ---- month actions ---- */
+function updateMonthPrice(cid,mid,val){
+  cid=+cid;mid=+mid;
+  const c=customers.find(x=>x.id===cid);
+  const m=c&&c.months.find(x=>x.id===mid);
+  if(m){m.price=parseFloat(val)||0;render();}
+}
+function togglePaid(cid,mid,val){
+  cid=+cid;mid=+mid;
+  const c=customers.find(x=>x.id===cid);
+  const m=c&&c.months.find(x=>x.id===mid);
+  if(m){m.paid=val;render();}
+}
+function deleteMonth(cid,mid){
+  cid=+cid;mid=+mid;
+  const c=customers.find(x=>x.id===cid);
+  if(!c)return;
+  if(c.months[0]&&c.months[0].id===mid){showToast('ไม่สามารถลบเดือนแรกที่เข้าจอดได้','error');return;}
+  if(c.months.length>1){c.months=c.months.filter(m=>m.id!==mid);render();}
+  else showToast('ต้องมีอย่างน้อย 1 เดือน','error');
+}
+function addNextMonth(cid){
+  cid=+cid;
+  const c=customers.find(x=>x.id===cid);if(!c)return;
+  const idx=c.months.length;
+  // คำนวณ deadline จาก startDate ต้นทางเสมอ ไม่ดึงจาก deadline เดือนก่อน
+  const nextDl=monthDeadline(c.startDate, idx);
+  const label=formatMonthLabel(c.startDate,idx);
+  c.months.push({id:nextMonthId++,label,deadline:nextDl.toISOString(),paid:false,price:c.price});
+  render();
+  showToast('เพิ่มเดือน '+label+' แล้ว','success');
+}
+
+/* ---- filter ---- */
+function isCurrentMonthPaid(c){
+  // หาเดือนที่ deadline อยู่ในเดือนปัจจุบัน
+  const now=new Date();
+  const currentMonths=c.months.filter(m=>{
+    const d=new Date(m.deadline);
+    return d.getFullYear()===now.getFullYear()&&d.getMonth()===now.getMonth();
+  });
+  if(!currentMonths.length)return false;
+  return currentMonths.every(m=>m.paid);
+}
+function filteredCustomers(){
+  return customers.filter(c=>{
+    if(currentFilter==='inactive')return c.inactive===true;
+    if(c.inactive)return false; // ซ่อน inactive จาก filter อื่นทั้งหมด
+    if(currentFilter==='overdue')return getCustomerMainStatus(c)==='overdue';
+    if(currentFilter==='paid')return isCurrentMonthPaid(c);
+    return true; // 'all' = active ทั้งหมด
+  }).sort((a,b)=>{
+    if(currentFilter==='inactive')return new Date(b.startDate)-new Date(a.startDate);
+    const sa=getCustomerMainStatus(a),sb=getCustomerMainStatus(b);
+    const order={overdue:0,unpaid:1,paid:2};
+    return order[sa]-order[sb];
+  });
+}
+
+/* ---- render sidebar ---- */
+function renderSidebar(){
+  const list=document.getElementById('car-list');
+  const fc=filteredCustomers();
+  if(!fc.length){list.innerHTML='<div style="padding:20px;text-align:center;color:#475569;font-size:12px">ไม่มีข้อมูล</div>';return;}
+  list.innerHTML=fc.map(c=>{
+    const st=getCustomerMainStatus(c);
+    const dotCls=st==='paid'?'dot-paid':st==='overdue'?'dot-overdue':'dot-unpaid';
+    const latest=getLatestUnpaidMonth(c);
+    const metaText=latest?countdownText(latest.deadline):('จอด '+c.months.length+' เดือน ✅');
+    return'<div class="car-item'+(c.id===selectedId?' active':'')+'" onclick="selectCustomer('+c.id+')">'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<div class="car-plate">'+escHtml(c.plate)+'</div>'
+      +(c.inactive?'<span style="font-size:9px;background:#f1f5f9;color:#94a3b8;padding:1px 5px;border-radius:4px">ออกแล้ว</span>':'')
+      +'</div>'
+      +'<div class="car-name">'+escHtml(c.name)+(c.phone?' · '+escHtml(c.phone):'')+'</div>'
+      +'<div class="car-meta"><span class="status-dot '+dotCls+'"></span><span class="car-meta-text">'+metaText+'</span></div>'
+      +'</div>';
+  }).join('');
+}
+
+/* ---- render content ---- */
+function renderContent(){
+  if(currentView==='overview')renderOverview();
+  else if(currentView==='detail')renderDetail();
+  else renderCalendar();
+}
+
+function renderOverview(){
+  const mc=document.getElementById('main-content');
+  const active=customers.filter(c=>!c.inactive);
+  const total=active.length;
+  const overdue=active.filter(c=>getCustomerMainStatus(c)==='overdue').length;
+  const paid=active.filter(c=>c.months.every(m=>m.paid)).length;
+  const totalIncome=customers.reduce((sum,c)=>sum+c.months.filter(m=>m.paid).reduce((s,m)=>s+(m.price),0),0);
+  const pending=active.reduce((sum,c)=>sum+c.months.filter(m=>!m.paid).reduce((s,m)=>s+(m.price),0),0);
+
+  let html='<div class="stats-grid">'
+    +'<div class="stat-card"><div class="stat-num" style="color:#3b82f6">'+total+'</div><div class="stat-lbl">คันทั้งหมด</div></div>'
+    +'<div class="stat-card"><div class="stat-num" style="color:#ef4444">'+overdue+'</div><div class="stat-lbl">ค้างชำระ</div></div>'
+    +'<div class="stat-card"><div class="stat-num" style="color:#22c55e">'+paid+'</div><div class="stat-lbl">จ่ายครบ</div></div>'
+    +'</div>'
+    +'<div class="card" style="margin-bottom:14px">'
+    +'<div class="card-title"><i class="ti ti-cash" style="color:#22c55e"></i>สรุปการเงิน</div>'
+    +'<div style="display:flex;gap:16px;flex-wrap:wrap">'
+    +'<div><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">เก็บได้แล้ว</div><div style="font-size:22px;font-weight:700;color:#22c55e">'+totalIncome.toLocaleString()+' ฿</div></div>'
+    +'<div style="border-left:1px solid rgba(0,0,0,0.08);padding-left:16px"><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">รอเก็บ</div><div style="font-size:22px;font-weight:700;color:#f59e0b">'+pending.toLocaleString()+' ฿</div></div>'
+    +'</div></div>';
+
+  if(!customers.length){
+    html+='<div class="empty"><i class="ti ti-parking"></i><div style="font-size:16px;font-weight:500;color:#475569;margin-bottom:8px">ยังไม่มีลูกค้า</div><div style="font-size:13px;margin-bottom:20px">กดเพิ่มลูกค้าใหม่เพื่อเริ่มต้น</div><button onclick="openAddModal()" style="padding:10px 24px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit"><i class="ti ti-plus"></i> เพิ่มลูกค้าแรก</button></div>';
+  }else{
+    // แสดงลูกค้าที่ค้างก่อน
+    const sorted=[...customers].filter(c=>!c.inactive).sort((a,b)=>{const o={overdue:0,unpaid:1,paid:2};return o[getCustomerMainStatus(a)]-o[getCustomerMainStatus(b)];});
+    html+=sorted.map(c=>{
+      const st=getCustomerMainStatus(c);
+      const badgeCls=st==='paid'?'status-paid':st==='overdue'?'status-overdue':'status-unpaid';
+      const badgeText=st==='paid'?'จ่ายครบ':st==='overdue'?'ค้างชำระ':'รอชำระ';
+      const latest=getLatestUnpaidMonth(c);
+      const sub=latest?countdownText(latest.deadline):('จอด '+c.months.length+' เดือน');
+      return'<div class="ov-card" onclick="selectCustomer('+c.id+')">'
+        +'<div class="ov-top">'
+        +'<div class="ov-plate">'+escHtml(c.plate)+'</div>'
+        +'<div class="ov-name">'+escHtml(c.name)+'</div>'
+        +'<div class="ov-badge '+badgeCls+'">'+badgeText+'</div>'
+        +'</div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center">'
+        +'<div class="ov-months">'+sub+' · จอดมา '+c.months.length+' เดือน</div>'
+        +'<div class="ov-price">'+c.price.toLocaleString()+' ฿/เดือน</div>'
+        +'</div></div>';
+    }).join('');
+  }
+  mc.innerHTML=html;
+}
+
+function renderDetail(){
+  const mc=document.getElementById('main-content');
+  const c=customers.find(x=>x.id===selectedId);
+  // lock ราคาทุกเดือนที่มีอยู่แล้ว ไม่ให้ fallback ไป c.price อีก
+  if(c) c.months.forEach(m=>{if(m.price==null||m.price===undefined)m.price=c.price;});
+  if(!c){
+    mc.innerHTML='<div class="empty"><i class="ti ti-id-badge"></i><div style="font-size:16px;font-weight:500;color:#475569;margin-bottom:8px">เลือกลูกค้าจากแถบซ้าย</div><button onclick="openAddModal()" style="padding:10px 24px;background:#3b82f6;color:#fff;border:none;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit"><i class="ti ti-plus"></i> เพิ่มลูกค้าใหม่</button></div>';
+    return;
+  }
+  const totalPaid=c.months.filter(m=>m.paid).length;
+  const totalPaidAmount=c.months.filter(m=>m.paid).reduce((s,m)=>s+(m.price),0);
+
+  let html='<div class="card">'
+    +'<div class="card-title"><i class="ti ti-car" style="color:#3b82f6"></i>ข้อมูลลูกค้า'
+    +'<div style="margin-left:auto;display:flex;gap:6px">'
+    +'<button onclick="toggleInactive('+c.id+')" style="padding:4px 10px;background:'+(c.inactive?'#f0fdf4':'#fef9c3')+';border:1px solid '+(c.inactive?'#86efac':'#fde68a')+';border-radius:6px;color:'+(c.inactive?'#16a34a':'#854d0e')+';font-size:11px;cursor:pointer;font-family:inherit">'+(c.inactive?'<i class="ti ti-rotate-clockwise"></i> ใช้งานอยู่':'<i class="ti ti-logout"></i> ออกแล้ว')+'</button>'
+    +'<button onclick="deleteCustomer('+c.id+')" style="padding:4px 10px;background:transparent;border:1px solid #fca5a5;border-radius:6px;color:#ef4444;font-size:11px;cursor:pointer;font-family:inherit"><i class="ti ti-trash"></i> ลบ</button>'
+    +'</div>'
+    +'</div>'
+    +'<div class="info-grid">'
+    +'<div class="info-field"><label>ป้ายทะเบียน</label><input class="info-input" value="'+escHtml(c.plate)+'" style="font-size:20px;font-weight:700;letter-spacing:1px" onchange="updateCustomer('+c.id+',\'plate\',this.value.toUpperCase());this.value=this.value.toUpperCase()"></div>'
+    +'<div class="info-field"><label>ชื่อ</label><input class="info-input" value="'+escHtml(c.name)+'" onchange="updateCustomer('+c.id+',\'name\',this.value)"></div>'
+    +'<div class="info-field"><label>เบอร์ติดต่อ</label><input class="info-input" value="'+escHtml(c.phone||'')+'" type="tel" onchange="updateCustomer('+c.id+',\'phone\',this.value)"></div>'
+    +'<div class="info-field"><label>วันที่เข้าจอด</label><input class="info-input" value="'+c.startDate+'" type="date" onchange="updateCustomer('+c.id+',\'startDate\',this.value)"></div>'
+    +'<div class="info-field" style="grid-column:1/-1"><label>รายละเอียดเพิ่มเติม</label><input class="info-input" value="'+escHtml(c.note||'')+'" placeholder="เช่น รถตู้สีขาว" onchange="updateCustomer('+c.id+',\'note\',this.value)"></div>'
+    +'</div>'
+    +'<div style="margin-top:12px;display:flex;align-items:center;gap:16px;flex-wrap:wrap">'
+    +'<div><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">ราคา/เดือน</div>'
+    +'<div style="display:flex;align-items:baseline;gap:4px"><input class="info-input" value="'+c.price+'" type="number" min="0" style="font-size:22px;font-weight:700;width:120px;padding:6px 10px" onchange="updateCustomer('+c.id+',\'price\',parseFloat(this.value)||0)"><span class="price-unit">บาท</span></div></div>'
+    +'<div><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">จอด</div>'
+    +'<div style="font-size:18px;font-weight:700;color:#3b82f6">'+c.months.length+' เดือน</div></div>'
+    +'<div><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">จ่ายแล้ว</div>'
+    +'<div style="font-size:18px;font-weight:700;color:#22c55e">'+totalPaid+' เดือน</div></div>'
+    +'<div><div style="font-size:11px;color:#94a3b8;margin-bottom:2px">รวมที่เก็บได้</div>'
+    +'<div style="font-size:18px;font-weight:700;color:#1e293b">'+totalPaidAmount.toLocaleString()+' ฿</div></div>'
+    +'</div></div>';
+
+  html+='<div class="card"><div class="card-title"><i class="ti ti-calendar-due" style="color:#f59e0b"></i>รายการรายเดือน</div>'
+    +c.months.map(m=>{
+      const st=getMonthStatus(m);
+      const stClass=st==='paid'?'paid':st==='overdue'?'overdue':'unpaid';
+      const stBadge=st==='paid'?'<span class="month-status status-paid">✅ จ่ายแล้ว</span>':st==='overdue'?'<span class="month-status status-overdue">🔴 เลยกำหนด</span>':'<span class="month-status status-unpaid">🟡 รอชำระ</span>';
+      const dlText=st==='paid'?'กำหนด '+formatDeadline(m.deadline):formatDeadline(m.deadline)+' · '+countdownText(m.deadline);
+      return'<div class="month-row '+stClass+'">'
+        +'<input type="checkbox" class="month-cb"'+(m.paid?' checked':'')+' onchange="togglePaid('+c.id+','+m.id+',this.checked)" title="'+(m.paid?'ยกเลิกจ่าย':'ทำเครื่องหมายว่าจ่ายแล้ว')+'">'
+        +'<div class="month-info"><div class="month-label">'+escHtml(m.label)+'</div><div class="month-deadline">'+dlText+'</div></div>'
+        +stBadge
+        +'<div style="display:flex;flex-direction:column;align-items:flex-end;gap:2px;flex-shrink:0">'
+        +'<input type="number" min="0" value="'+m.price+'" style="width:72px;font-size:13px;font-weight:600;text-align:right;border:1px solid rgba(0,0,0,0.1);border-radius:6px;padding:3px 6px;font-family:inherit;background:transparent;color:#1e293b" onchange="updateMonthPrice('+c.id+','+m.id+',this.value)" title="แก้ไขราคาเดือนนี้">'
+        +'<span style="font-size:9px;color:#94a3b8">฿/เดือน</span>'
+        +'</div>'
+        +'<button class="month-del" onclick="deleteMonth('+c.id+','+m.id+')" title="ลบเดือนนี้"><i class="ti ti-x" style="font-size:14px"></i></button>'
+        +'</div>';
+    }).join('')
+    +'<button class="add-month-btn" onclick="addNextMonth('+c.id+')"><i class="ti ti-plus"></i> เพิ่มเดือนถัดไป</button>'
+    +'</div>';
+
+  mc.innerHTML=html;
+}
+
+function renderCalendar(){
+  const mc=document.getElementById('main-content');
+  const now=new Date(),y=calYear,m=calMonth;
+  const firstDay=new Date(y,m,1).getDay(),dim=new Date(y,m+1,0).getDate();
+
+  // รวม events ทุกคัน
+  const events={};
+  customers.forEach(c=>{
+    c.months.forEach(mo=>{
+      const d=new Date(mo.deadline);
+      if(d.getFullYear()===y&&d.getMonth()===m){
+        const day=d.getDate();
+        if(!events[day])events[day]=[];
+        const st=getMonthStatus(mo);
+        events[day].push({plate:c.plate,name:c.name,status:st,cid:c.id});
+      }
+    });
+  });
+
+  const cellH=isMobile()?'52px':'64px';
+  let html='<div class="card">'
+    +'<div class="cal-nav"><button class="cal-nav-btn" onclick="calNav(-1)">‹</button>'
+    +'<span class="cal-title">'+THAI_MONTHS_FULL[m]+' '+(y+543)+'</span>'
+    +'<button class="cal-nav-btn" onclick="calNav(1)">›</button></div>'
+    +'<div class="cal-grid">'
+    +['อา','จ','อ','พ','พฤ','ศ','ส'].map(d=>'<div class="cal-hd">'+d+'</div>').join('')
+    +Array(firstDay).fill('<div></div>').join('')
+    +Array.from({length:dim},(_,i)=>{
+      const day=i+1,isToday=(now.getFullYear()===y&&now.getMonth()===m&&now.getDate()===day);
+      const dayEvents=events[day]||[];
+      return'<div class="cal-day'+(isToday?' today':'')+'" style="min-height:'+cellH+'">'
+        +'<div class="cal-day-num">'+day+'</div>'
+        +dayEvents.map(ev=>{
+          const cls=ev.status==='paid'?'ev-paid':ev.status==='overdue'?'ev-overdue':'ev-unpaid';
+          return'<div class="cal-event '+cls+'" onclick="selectCustomer('+ev.cid+')" title="'+ev.name+'">'+ev.plate+'</div>';
+        }).join('')
+        +'</div>';
+    }).join('')
+    +'</div>'
+    +'<div style="margin-top:10px;display:flex;gap:12px;flex-wrap:wrap;font-size:11px;color:#64748b">'
+    +'<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#dcfce7;border-radius:3px;display:inline-block"></span>จ่ายแล้ว</span>'
+    +'<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#fef9c3;border-radius:3px;display:inline-block"></span>รอชำระ</span>'
+    +'<span style="display:flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:#fee2e2;border-radius:3px;display:inline-block"></span>เลยกำหนด</span>'
+    +'</div></div>';
+  mc.innerHTML=html;
+}
+
+function render(){renderSidebar();renderContent();}
+function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-tab').forEach(e=>e.classList.remove('active'));el.classList.add('active');render();}
+function setView(v,el){currentView=v;document.querySelectorAll('.view-tab').forEach(e=>e.classList.remove('active'));el.classList.add('active');render();}
+function calNav(d){calMonth+=d;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}render();}
+
+updateFileStatus();
+recalcIds();
+render();
+</script>
+</body>
+</html>
