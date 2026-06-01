@@ -1,104 +1,107 @@
 # Parking Manager
 
-A simple, privacy-first parking fee management system — runs entirely in your browser, no installation, no account, no internet required.
-
-ระบบจัดการค่าจอดรถรายเดือน ใช้งานง่าย รันในเบราว์เซอร์ล้วนๆ ไม่ต้องติดตั้ง ไม่ต้องสมัครสมาชิก
+A lightweight, privacy-first monthly parking fee management system that runs entirely in the browser — no installation, no account required.
 
 ---
 
-## 🚀 วิธีใช้งาน / Getting Started
+## Overview
 
-### Desktop (แนะนำ)
-ดับเบิลคลิกที่ไฟล์ `parking_manager.html` → เบราว์เซอร์เปิดขึ้นมาใช้งานได้ทันที
-
-### Mobile (iPhone / Android)
-เปิด link นี้ใน **Safari** หรือ **Chrome**:
-
-👉 **[https://pongpichetdinmuang.github.io/parking-manager/parking_manager.html](https://pongpichetdinmuang.github.io/parking-manager/parking_manager.html)**
+Parking Manager is a single-file web application (`parking_manager.html`) built with vanilla HTML, CSS, and JavaScript. All data is stored locally in the browser via `localStorage`. No data is ever transmitted to a server.
 
 ---
 
-## ✨ ฟีเจอร์ / Features
+## Usage
 
-### 🚗 จัดการลูกค้า
-- เพิ่ม แก้ไข ลบข้อมูลลูกค้าได้
-- เก็บข้อมูล ป้ายทะเบียน, ชื่อ, เบอร์ติดต่อ, วันที่เข้าจอด, ราคา/เดือน, รายละเอียดเพิ่มเติม
-- ตั้งสถานะ **ออกแล้ว** สำหรับลูกค้าที่เลิกจอด ข้อมูลยังเก็บอยู่ครบ
+### Via GitHub Pages (recommended)
 
-### 📅 รายการรายเดือน
-- กดปุ่ม **+ เพิ่มเดือนถัดไป** ระบบคำนวณ deadline อัตโนมัติจากวันเข้าจอด
-- ติ๊ก ✅ เพื่อบันทึกว่าจ่ายแล้ว กดซ้ำเพื่อยกเลิก
-- **ราคาแยกแต่ละเดือน** — ขึ้นราคาเดือนถัดไปได้โดยไม่กระทบเดือนเก่า
-- ปุ่มลบเดือน (ป้องกันลบเดือนแรกโดยไม่ตั้งใจ)
-
-### 🔴 สถานะอัตโนมัติ
-ระบบคำนวณสถานะจาก deadline ของแต่ละเดือนอัตโนมัติ
-
-| สถานะ | ความหมาย | สี |
-|---|---|---|
-| ✅ จ่ายแล้ว | ติ๊กว่าชำระแล้ว | 🟢 เขียว |
-| 🟡 รอชำระ | ยังไม่ถึงกำหนดและยังไม่จ่าย | 🟡 เหลือง |
-| 🔴 เลยกำหนด | เลย deadline แล้วยังไม่จ่าย | 🔴 แดง |
-
-### 📊 ภาพรวม
-- จำนวนคันที่จอดอยู่, ค้างชำระ, จ่ายครบ
-- สรุปการเงิน — เก็บได้แล้วกี่บาท รอเก็บอีกกี่บาท
-- รายชื่อลูกค้าเรียงจากค้างก่อน → รอชำระ → จ่ายครบ
-
-### 📅 ปฏิทิน
-- แสดงป้ายทะเบียนในวัน deadline ของแต่ละเดือน
-- สีตามสถานะ กดที่ป้ายเพื่อดูรายละเอียดได้
-
-### 💾 บันทึกและโหลดข้อมูล
-- **Desktop Chrome/Edge**: กด **บันทึก** เพื่อ save ไฟล์ลง folder ที่เลือกได้เลย
-- **Mobile / อื่นๆ**: ดาวน์โหลด `parking_data.json` แล้วโหลดกลับมาได้
-
----
-
-## 🔒 ความเป็นส่วนตัว / Privacy
-
-- ข้อมูลทั้งหมดอยู่ในเครื่องของคุณเท่านั้น ไม่มีการส่งออก internet
-- ไม่มี cookies ไม่มีการติดตาม ไม่มีโฆษณา
-- ไม่ใช้ localStorage ของเบราว์เซอร์ — ข้อมูลอยู่ใน `parking_data.json` ที่คุณดูแลเอง
-
----
-
-## 📁 โครงสร้างไฟล์ / File Structure
+Open the following URL in any browser:
 
 ```
-📁 your-folder/
-├── parking_manager.html    ← เปิดไฟล์นี้
-└── parking_data.json       ← ข้อมูลของคุณ (สร้างเมื่อกด บันทึก)
+https://pongpichetdinmuang.github.io/parking-manager/parking_manager.html
 ```
 
----
+Bookmark it for quick access. Data persists in `localStorage` as long as the browser's site data is not cleared.
 
-## 📱 วิธีใช้บน iPhone / How to Use on iPhone
+### Via local file
 
-1. เปิด **Safari** แล้วไปที่ GitHub Pages link
-2. กด **Share** → **Add to Home Screen** เพื่อสร้าง icon บนหน้าจอ
-3. กด **บันทึก** เพื่อดาวน์โหลด `parking_data.json` ไปเก็บใน Files
-4. กด **เปิด** เพื่อโหลดข้อมูลกลับมา
+Download `parking_manager.html` and open it directly in a browser. Note that `localStorage` is scoped to the origin, so data saved when running from `file://` is separate from data saved via GitHub Pages.
 
 ---
 
-## 🌐 Browser Support
+## Features
+
+### Customer Management
+- Add, edit, and delete customer records
+- Fields: license plate, name, phone number, start date, monthly price, and notes
+- Mark a customer as inactive (moved out) without deleting their record
+
+### Monthly Billing
+- Add billing months per customer; deadline is calculated automatically from the start date
+- Mark months as paid or unpaid with a single checkbox
+- Each month stores its own price, allowing price changes without affecting past records
+- First month cannot be deleted to preserve billing history
+
+### Status Classification
+
+Status is derived automatically from each month's deadline.
+
+| Status   | Condition                              |
+|----------|----------------------------------------|
+| Paid     | Marked as paid                         |
+| Pending  | Deadline has not passed, not yet paid  |
+| Overdue  | Deadline has passed, not yet paid      |
+
+### Views
+- **Overview** — summary stats (total active, overdue, fully paid) and a financial summary (collected vs pending)
+- **Customer detail** — full edit view with monthly billing list
+- **Calendar** — monthly view with license plates shown on their deadline dates, color-coded by status
+
+### Data Management
+
+| Action | Behavior |
+|--------|----------|
+| Save | Writes current state to `localStorage` |
+| Open file | Loads a previously exported `.json` file into memory; press Save to commit to `localStorage` |
+| Export JSON | Downloads `parking_data.json` to the device for backup or transfer to another browser/device |
+
+---
+
+## Data & Privacy
+
+- All data is stored in `localStorage` on the user's device only
+- No cookies, analytics, tracking, or external requests of any kind
+- The exported `parking_data.json` is a plain JSON file the user owns and controls
+
+---
+
+## Browser Support
 
 | Browser | Desktop | Mobile |
-|---|---|---|
-| Chrome | ✅ (save ตรง folder ได้) | ✅ |
-| Safari | ✅ | ✅ |
-| Edge | ✅ (save ตรง folder ได้) | ✅ |
-| Firefox | ✅ (download/upload) | ✅ |
+|---------|---------|--------|
+| Chrome  | Yes     | Yes    |
+| Safari  | Yes     | Yes    |
+| Edge    | Yes     | Yes    |
+| Firefox | Yes     | Yes    |
 
 ---
 
-## 🛠️ Built With
+## Tech Stack
 
-- Pure HTML, CSS, JavaScript — ไม่มี framework ไม่มี dependency
-- [Tabler Icons](https://tabler.io/icons)
-- File System Access API (Chrome/Edge desktop)
+- HTML / CSS / JavaScript (no frameworks, no build step)
+- [Tabler Icons](https://tabler.io/icons) (loaded via CDN)
 
 ---
 
-*ทำเพื่อให้การจดบันทึกง่ายกว่าใช้ดินสอ 🚗*
+## File Structure
+
+```
+parking-manager/
+├── parking_manager.html    # Application entry point
+└── README.md
+```
+
+---
+
+## License
+
+MIT
