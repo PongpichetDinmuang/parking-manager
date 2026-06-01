@@ -203,11 +203,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;backgrou
       <div class="app-title"><i class="ti ti-parking"></i>ที่จอดรถ</div>
       <button class="add-btn" onclick="openAddModal()"><i class="ti ti-plus"></i> เพิ่มลูกค้าใหม่</button>
       <div class="file-btns">
-        <button class="file-btn save-btn" onclick="saveFile()"><i class="ti ti-device-floppy"></i> บันทึก</button>
+        <button class="file-btn save-btn" onclick="saveToLocal()"><i class="ti ti-device-floppy"></i> บันทึก</button>
         <button class="file-btn" onclick="document.getElementById('load-input').click()"><i class="ti ti-folder-open"></i> เปิด</button>
         <input type="file" id="load-input" accept=".json" style="display:none" onchange="loadFromFile(this)">
       </div>
-      <div class="file-status" id="file-status">ยังไม่ได้เชื่อมไฟล์</div>
+      <div class="file-btns" style="margin-top:8px">
+        <button class="file-btn" onclick="exportJson()" style="color:#60a5fa;border-color:#60a5fa"><i class="ti ti-download"></i> Export JSON</button>
+      </div>
+      <div class="file-status" id="file-status">กำลังโหลด...</div>
     </div>
     <div class="filter-tabs">
       <button class="filter-tab active" onclick="setFilter('all',this)">ใช้งาน</button>
@@ -239,7 +242,6 @@ let customers=[];
 let selectedId=null,currentFilter='all',currentView='overview';
 let calYear=new Date().getFullYear(),calMonth=new Date().getMonth();
 let nextId=1,nextMonthId=1;
-let fileHandle=null;
 
 /* ---- utils ---- */
 function escHtml(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
@@ -307,37 +309,60 @@ function getCustomerMainStatus(c){
 function openSidebar(){document.getElementById('sidebar').classList.add('open');document.getElementById('overlay').classList.add('show')}
 function closeSidebar(){document.getElementById('sidebar').classList.remove('open');document.getElementById('overlay').classList.remove('show')}
 
-/* ---- file ---- */
+/* ---- localStorage ---- */
+const LS_KEY='parking_manager_data';
+
 function updateFileStatus(){
   const el=document.getElementById('file-status');
-  if(fileHandle){el.className='file-status linked';el.innerHTML='<i class="ti ti-link"></i> '+fileHandle.name;}
-  else{el.className='file-status';el.textContent='ยังไม่ได้เชื่อมไฟล์';}
+  const raw=localStorage.getItem(LS_KEY);
+  if(raw){
+    try{
+      const d=JSON.parse(raw);
+      const saved=d.meta&&d.meta.savedAt?new Date(d.meta.savedAt):null;
+      const timeStr=saved?saved.toLocaleString('th-TH',{day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}):'';
+      el.className='file-status linked';
+      el.innerHTML='<i class="ti ti-device-floppy"></i> บันทึกล่าสุด '+timeStr;
+    }catch(e){el.className='file-status linked';el.innerHTML='<i class="ti ti-device-floppy"></i> มีข้อมูลใน browser';}
+  }else{
+    el.className='file-status';el.textContent='ยังไม่มีข้อมูล — กด บันทึก เพื่อเริ่ม';
+  }
 }
-function downloadJson(data){
+
+function saveToLocal(){
+  const data={customers,meta:{savedAt:new Date().toISOString(),version:1}};
+  try{
+    localStorage.setItem(LS_KEY,JSON.stringify(data));
+    updateFileStatus();
+    showToast('💾 บันทึกแล้ว','success');
+  }catch(e){
+    showToast('บันทึกไม่ได้ (storage เต็ม?)','error');
+  }
+}
+
+function loadFromLocal(){
+  try{
+    const raw=localStorage.getItem(LS_KEY);
+    if(!raw)return false;
+    const data=JSON.parse(raw);
+    if(data.customers&&Array.isArray(data.customers)){
+      customers=data.customers;
+      selectedId=customers.length?customers[0].id:null;
+      recalcIds();
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
+function exportJson(){
+  const data=JSON.stringify({customers,meta:{savedAt:new Date().toISOString(),version:1}},null,2);
   const blob=new Blob([data],{type:'application/json'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);a.download='parking_data.json';a.click();
   URL.revokeObjectURL(a.href);
-  showToast('💾 ดาวน์โหลด parking_data.json แล้ว','success');
+  showToast('📤 Export parking_data.json แล้ว','info');
 }
-async function saveFile(){
-  const data=JSON.stringify({customers,meta:{savedAt:new Date().toISOString(),version:1}},null,2);
-  const isDesktop=window.showSaveFilePicker&&!/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent);
-  if(isDesktop){
-    try{
-      if(!fileHandle){
-        fileHandle=await window.showSaveFilePicker({suggestedName:'parking_data.json',types:[{description:'JSON',accept:{'application/json':['.json']}}]});
-      }
-      const w=await fileHandle.createWritable();await w.write(data);await w.close();
-      updateFileStatus();showToast('💾 บันทึกแล้ว','success');
-    }catch(err){
-      if(err.name==='AbortError')return;
-      fileHandle=null;updateFileStatus();downloadJson(data);
-    }
-    return;
-  }
-  downloadJson(data);
-}
+
 function loadFromFile(input){
   const file=input.files[0];if(!file)return;
   const reader=new FileReader();
@@ -345,10 +370,10 @@ function loadFromFile(input){
     try{
       const data=JSON.parse(e.target.result);
       if(data.customers&&Array.isArray(data.customers)){
-        customers=data.customers;fileHandle=null;
+        customers=data.customers;
         selectedId=customers.length?customers[0].id:null;
         recalcIds();updateFileStatus();render();
-        showToast('📂 โหลดสำเร็จ — '+customers.length+' คัน','info');
+        showToast('📂 โหลดสำเร็จ — '+customers.length+' คัน (กด บันทึก เพื่อเก็บใน browser)','info');
       }else showToast('ไฟล์ไม่ถูกต้อง','error');
     }catch{showToast('อ่านไฟล์ไม่ได้','error');}
     input.value='';
@@ -664,6 +689,7 @@ function setFilter(f,el){currentFilter=f;document.querySelectorAll('.filter-tab'
 function setView(v,el){currentView=v;document.querySelectorAll('.view-tab').forEach(e=>e.classList.remove('active'));el.classList.add('active');render();}
 function calNav(d){calMonth+=d;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}render();}
 
+loadFromLocal();
 updateFileStatus();
 recalcIds();
 render();
